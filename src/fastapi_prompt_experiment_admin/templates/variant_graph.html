@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title }} · Variant Graph</title>
+    <style>
+      :root {
+        --bg: #151719;
+        --panel: #202327;
+        --panel-soft: #262b31;
+        --text: #ecf1f3;
+        --muted: #9aa5ad;
+        --border: #3a4148;
+        --accent: #38c7d8;
+        --accent-2: #d5b36a;
+        --line: #2ca9bf;
+        --content-max: 1320px;
+        font-family: "SF Pro Text", "Aptos", ui-sans-serif, system-ui, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.45; }
+      header { position: sticky; top: 0; z-index: 4; padding: 16px 22px; background: rgba(21,23,25,.94); border-bottom: 1px solid var(--border); backdrop-filter: blur(8px); }
+      header > * { max-width: var(--content-max); margin-left: auto; margin-right: auto; }
+      main { max-width: var(--content-max); margin: 0 auto; padding: 18px 22px 36px; }
+      h1, h2, h3, p { margin-top: 0; }
+      h1 { margin-bottom: 4px; font-size: 21px; letter-spacing: 0; }
+      h2 { margin-bottom: 5px; font-size: 18px; }
+      h3 { margin-bottom: 2px; font-size: 15px; overflow-wrap: anywhere; }
+      a { color: #8adce6; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      code { font-size: 12px; overflow-wrap: anywhere; }
+      .subtle, .label { color: var(--muted); font-size: 12px; margin-bottom: 0; }
+      .topline { display: flex; justify-content: space-between; align-items: start; gap: 16px; }
+      .links { display: flex; flex-wrap: wrap; justify-content: flex-end; align-content: flex-start; gap: 8px; }
+      .links a, .button-link { border: 1px solid var(--border); border-radius: 5px; padding: 4px 8px; background: #181b1f; font-size: 12px; }
+      .overview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 18px; }
+      .overview-card { border: 1px solid var(--border); border-radius: 8px; background: var(--panel); padding: 12px; }
+      .overview-card span { display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; }
+      .overview-card strong { display: block; margin-top: 4px; font-size: 24px; color: var(--accent); }
+      .run-section { margin-bottom: 18px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); padding: 14px; box-shadow: 0 18px 36px rgba(0,0,0,.22); }
+      .run-head { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+      .lineage-canvas { display: grid; grid-template-columns: 250px 36px minmax(0, 1fr); gap: 12px; align-items: stretch; }
+      .runtime-node { border: 1px solid #286876; border-radius: 8px; padding: 12px; background: linear-gradient(180deg, #12323a 0%, #1c272c 100%); display: flex; flex-direction: column; justify-content: center; gap: 6px; min-height: 130px; }
+      .runtime-node span { color: var(--muted); font-size: 12px; text-transform: uppercase; }
+      .runtime-node strong { overflow-wrap: anywhere; }
+      .runtime-node code { color: #d9e7eb; }
+      .graph-rail { position: relative; display: flex; justify-content: center; }
+      .rail-line { width: 3px; min-height: 100%; background: linear-gradient(180deg, var(--line), #4f6470); border-radius: 999px; }
+      .rail-node { position: absolute; top: 52px; width: 18px; height: 18px; border: 3px solid var(--accent); border-radius: 999px; background: var(--bg); box-shadow: 0 0 0 5px rgba(56,199,216,.14); }
+      .variant-lanes { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+      .variant-card { position: relative; min-width: 0; }
+      .branch-wire { position: absolute; left: -30px; top: 30px; width: 30px; height: 28px; border-top: 2px solid var(--line); border-left: 2px solid var(--line); border-top-left-radius: 10px; }
+      .branch-wire span { position: absolute; right: -5px; top: -6px; width: 11px; height: 11px; border: 2px solid var(--accent-2); border-radius: 999px; background: var(--panel); }
+      .variant-body { position: relative; border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: var(--panel-soft); }
+      .variant-head { display: flex; justify-content: space-between; gap: 10px; }
+      .title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+      .badge { display: inline-flex; border: 1px solid #3f6f79; border-radius: 999px; color: #8adce6; font-size: 10px; font-weight: 800; padding: 1px 7px; text-transform: uppercase; white-space: nowrap; }
+      .badge.review { border-color: #78683f; color: #f0d696; }
+      .badge.runtime { border-color: #38c7d8; color: #9ff2fb; }
+      .hypothesis { color: var(--text); font-size: 12px; }
+      .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 6px; margin: 10px 0; }
+      .metric { border: 1px solid var(--border); border-radius: 5px; padding: 6px; background: #1a1d21; min-width: 0; }
+      .metric dt { color: var(--muted); font-size: 10px; }
+      .metric dd { margin: 0; overflow-wrap: anywhere; font-weight: 750; }
+      .meta-row { margin-top: 8px; display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 8px; align-items: start; }
+      .meta-row strong { color: var(--muted); font-size: 12px; }
+      .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+      .chip { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; padding: 2px 7px; font-size: 11px; background: #181b1f; }
+      .chip.slot { color: #d9e7eb; }
+      .chip.muted { color: var(--muted); }
+      .variant-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+      .diff-button { flex: 1 1 160px; border: 1px solid #3f6f79; border-radius: 6px; background: #12323a; color: var(--text); cursor: pointer; font: inherit; font-size: 12px; padding: 7px 9px; text-align: center; }
+      .diff-button:hover:not(:disabled) { background: #17434d; }
+      .diff-button:disabled { cursor: not-allowed; opacity: .55; }
+      .empty { color: var(--muted); }
+      .diff-drawer { position: fixed; inset: 0; z-index: 10; display: none; background: rgba(0,0,0,.48); }
+      .diff-drawer.open { display: block; }
+      .drawer-panel { position: absolute; top: 0; right: 0; width: min(760px, 100vw); height: 100%; overflow: auto; border-left: 1px solid var(--border); background: #181b1f; padding: 20px; box-shadow: -24px 0 44px rgba(0,0,0,.35); }
+      .drawer-head { display: flex; align-items: start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+      .drawer-kicker { color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+      .drawer-subtitle { color: var(--muted); font-size: 12px; }
+      .drawer-close { border: 1px solid var(--border); border-radius: 6px; background: #22272c; color: var(--text); cursor: pointer; font: inherit; padding: 6px 9px; }
+      .diff-slot { margin-bottom: 14px; border: 1px solid var(--border); border-radius: 8px; background: #111315; }
+      .diff-slot-head { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+      .diff-slot-head strong, .diff-slot-head span { display: block; }
+      .diff-slot-head span { color: var(--muted); font-size: 12px; }
+      .diff-code { margin: 0; padding: 10px 0; overflow: auto; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; line-height: 1.55; }
+      .diff-code span { display: block; min-width: max-content; padding: 0 12px; white-space: pre; }
+      .line-added { background: rgba(125,220,155,.14); color: #b5f2c7; }
+      .line-removed { background: rgba(255,125,115,.14); color: #ffc0ba; }
+      .line-hunk { color: #8adce6; }
+      .line-file { color: #d5b36a; }
+      .line-context { color: #d8dee3; }
+      .diff-empty { margin: 0; padding: 12px; color: var(--muted); font-size: 13px; }
+      @media (max-width: 900px) {
+        .overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .run-head, .topline { flex-direction: column; }
+        .lineage-canvas { grid-template-columns: 1fr; }
+        .graph-rail, .branch-wire { display: none; }
+      }
+      @media (max-width: 600px) {
+        main { padding: 14px 12px 28px; }
+        header { padding: 14px 12px; }
+        .overview { grid-template-columns: 1fr; }
+        .drawer-panel { padding: 18px 20px; }
+        .diff-slot-head { flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="topline">
+        <div>
+          <h1>Runtime Variant Graph</h1>
+          <p class="subtle">Prompt lineage for human-in-the-loop experiment review. Domain-specific artifacts stay in generic metrics, annotations, and links.</p>
+        </div>
+        <nav class="links">
+          <a href="{{ mount_path }}/variant_graph">graph JSON</a>
+          <a href="{{ mount_path }}/profiles">profiles JSON</a>
+          <a href="{{ mount_path }}/runs">runs JSON</a>
+        </nav>
+      </div>
+    </header>
+    <main>
+      <section class="overview">
+        <article class="overview-card"><span>Profiles</span><strong>{{ graph.profiles|length }}</strong></article>
+        <article class="overview-card"><span>Run groups</span><strong>{{ graph.run_groups|length }}</strong></article>
+        <article class="overview-card"><span>Runs</span><strong>{{ graph.runs|length }}</strong></article>
+        <article class="overview-card"><span>Promotions</span><strong>{{ graph.promotions|length }}</strong></article>
+      </section>
+
+      {% for group in graph.run_groups %}
+        <section class="run-section">
+          <div class="run-head">
+            <div>
+              <h2>{{ group.name }}</h2>
+              {% if graph.runtime_default %}
+                <p class="subtle">runtime <code>{{ graph.runtime_default.name }}</code> · profile <code>{{ graph.runtime_default.id }}</code></p>
+              {% else %}
+                <p class="subtle">runtime default is not set yet</p>
+              {% endif %}
+            </div>
+            <nav class="links">
+              <a href="{{ mount_path }}{{ group.dashboard_href }}">dashboard</a>
+              <a href="{{ mount_path }}{{ group.json_href }}">results</a>
+              <a href="{{ mount_path }}/variant_graph">summary</a>
+            </nav>
+          </div>
+          <div class="lineage-canvas">
+            <div class="runtime-node">
+              <span>Base runtime</span>
+              {% if graph.runtime_default %}
+                <strong>{{ graph.runtime_default.name }}</strong>
+                <code>{{ graph.runtime_default.id }}</code>
+              {% else %}
+                <strong>No runtime default</strong>
+                <code>promote a profile locally</code>
+              {% endif %}
+            </div>
+            <div class="graph-rail" aria-hidden="true">
+              <span class="rail-node"></span>
+              <span class="rail-line"></span>
+            </div>
+            <div class="variant-lanes">
+              {% for card in group.cards %}
+                {% include "variant_card.html" %}
+              {% endfor %}
+            </div>
+          </div>
+        </section>
+      {% endfor %}
+
+      {% if graph.unlinked_profiles %}
+        <section class="run-section">
+          <div class="run-head">
+            <div>
+              <h2>Profiles Without Runs</h2>
+              <p class="subtle">Profiles can be reviewed before a result artifact is attached.</p>
+            </div>
+          </div>
+          <div class="variant-lanes">
+            {% for card in graph.unlinked_profiles %}
+              {% include "variant_card.html" %}
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
+      {% if not graph.run_groups and not graph.unlinked_profiles %}
+        <p class="empty">No prompt profiles or experiment runs found.</p>
+      {% endif %}
+    </main>
+
+    <aside id="diff-drawer" class="diff-drawer" aria-hidden="true">
+      <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="diff-drawer-title">
+        <div class="drawer-head">
+          <div>
+            <div class="drawer-kicker">Prompt Diff</div>
+            <h2 id="diff-drawer-title">Select a variant</h2>
+            <p class="drawer-subtitle">Diffs compare the active runtime default against the selected profile.</p>
+          </div>
+          <button id="diff-close" class="drawer-close" type="button">Close</button>
+        </div>
+        <div id="diff-content"><p class="diff-empty">Choose a variant's Prompt Diff button.</p></div>
+      </div>
+    </aside>
+
+    <script>
+      (() => {
+        const drawer = document.getElementById("diff-drawer");
+        const content = document.getElementById("diff-content");
+        const title = document.getElementById("diff-drawer-title");
+        const close = document.getElementById("diff-close");
+        if (!drawer || !content || !title || !close) return;
+
+        function openDrawer(templateId) {
+          const template = document.getElementById(templateId);
+          if (!template) return;
+          content.innerHTML = template.innerHTML;
+          const heading = content.querySelector("h3");
+          title.textContent = heading ? heading.textContent || "Prompt Diff" : "Prompt Diff";
+          drawer.classList.add("open");
+          drawer.setAttribute("aria-hidden", "false");
+        }
+
+        function closeDrawer() {
+          drawer.classList.remove("open");
+          drawer.setAttribute("aria-hidden", "true");
+        }
+
+        document.querySelectorAll("[data-diff-template]").forEach((button) => {
+          button.addEventListener("click", () => openDrawer(button.getAttribute("data-diff-template")));
+        });
+        close.addEventListener("click", closeDrawer);
+        drawer.addEventListener("click", (event) => {
+          if (event.target === drawer) closeDrawer();
+        });
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") closeDrawer();
+        });
+      })();
+    </script>
+  </body>
+</html>

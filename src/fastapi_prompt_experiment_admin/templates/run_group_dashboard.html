@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title }} · {{ run_group }} Dashboard</title>
+    <style>
+      :root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #151922; background: #f5f7fa; }
+      body { margin: 0; }
+      main { max-width: 1180px; margin: 0 auto; padding: 30px 18px 56px; }
+      a { color: #175cd3; text-decoration: none; }
+      h1 { margin: 0 0 8px; font-size: 30px; }
+      h2 { margin: 24px 0 10px; font-size: 18px; }
+      p { margin: 0; color: #667085; }
+      code { background: #eef1f5; border-radius: 5px; padding: 2px 5px; }
+      pre { overflow: auto; background: #101828; color: #f2f4f7; padding: 14px; border-radius: 8px; line-height: 1.45; }
+      .topline { display: flex; justify-content: space-between; gap: 12px; align-items: start; margin-bottom: 16px; }
+      .pill { display: inline-flex; border: 1px solid #ccd3df; border-radius: 999px; padding: 2px 8px; font-size: 12px; color: #344054; background: #fff; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+      .card { background: #fff; border: 1px solid #d9dee7; border-radius: 8px; padding: 16px; }
+      .kv { display: grid; grid-template-columns: 110px 1fr; gap: 8px; margin-top: 8px; }
+      .kv span:first-child { color: #667085; }
+      @media (max-width: 720px) { .topline { flex-direction: column; } .kv { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="topline">
+        <div>
+          <h1>{{ run_group }}</h1>
+          <p>Generic run dashboard for human review. Project-specific renderers can replace or extend this page.</p>
+        </div>
+        <a class="pill" href="{{ mount_path }}/variant_graph.html">Variant Graph</a>
+      </div>
+
+      <section class="grid">
+        {% for card in cards %}
+          <article class="card">
+            <h2 style="margin-top:0">{{ card.label }}</h2>
+            <div class="kv"><span>Variant</span><span>{{ card.variant_key }}</span></div>
+            <div class="kv"><span>Review</span><span>{{ card.review_state }}</span></div>
+            <div class="kv"><span>Artifact</span><span>{{ card.artifact_kind }}{% if card.artifact_uri %} · <a href="{{ card.artifact_uri }}">{{ card.artifact_uri }}</a>{% endif %}</span></div>
+            {% if card.profile %}
+              <div class="kv"><span>Profile</span><code>{{ card.profile.id }}</code></div>
+            {% endif %}
+            <h2>Metrics</h2>
+            <pre>{{ card.metrics|to_pretty_json }}</pre>
+            <h2>Annotations</h2>
+            <pre>{{ card.annotations|to_pretty_json }}</pre>
+            <p><a href="{{ mount_path }}{{ card.dashboard_href }}">Open run detail</a></p>
+          </article>
+        {% endfor %}
+      </section>
+    </main>
+  </body>
+</html>

@@ -17,15 +17,16 @@ class CreateProfileRequest(BaseModel):
 class RecordRunRequest(BaseModel):
     run_group: str
     variant_key: str
+    label: str | None = None
     prompt_profile_id: str | None = None
     status: str = "recorded"
-    score: float | None = None
-    total: int = 0
-    passed: int = 0
-    review: int = 0
-    error: int = 0
+    review_state: str = "unreviewed"
+    sequence: int = 0
     artifact_uri: str | None = None
-    summary: dict[str, Any] | None = None
+    artifact_kind: str | None = None
+    metrics: dict[str, Any] | None = None
+    annotations: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class PromoteRequest(BaseModel):

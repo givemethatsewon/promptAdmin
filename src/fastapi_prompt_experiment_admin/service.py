@@ -89,15 +89,16 @@ class PromptRegistry:
         run = PromptExperimentRun(
             run_group=request.run_group,
             variant_key=request.variant_key,
-            prompt_profile_id=request.prompt_profile_id,
+            label=request.label,
+            prompt_profile_id=request.prompt_profile_id or None,
             status=request.status,
-            score=request.score,
-            total=request.total,
-            passed=request.passed,
-            review=request.review,
-            error=request.error,
+            review_state=request.review_state,
+            sequence=request.sequence,
             artifact_uri=request.artifact_uri,
-            summary_json=request.summary,
+            artifact_kind=request.artifact_kind,
+            metrics_json=request.metrics,
+            annotations_json=request.annotations,
+            metadata_json=request.metadata,
         )
         self.session.add(run)
         self.session.commit()

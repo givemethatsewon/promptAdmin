@@ -1,0 +1,72 @@
+<article class="variant-card">
+  <div class="branch-wire" aria-hidden="true"><span></span></div>
+  <div class="variant-body">
+    <div class="variant-head">
+      <div>
+        <div class="title-row">
+          <h3>{{ card.variant_key or card.label }}</h3>
+          {% if card.profile and graph.runtime_default_id == card.profile.id %}
+            <span class="badge runtime">runtime default</span>
+          {% endif %}
+          <span class="badge review">{{ card.review_state or card.status }}</span>
+        </div>
+        <p class="label">{{ card.label }}</p>
+      </div>
+      <span class="badge">{{ card.artifact_kind or card.source or "profile" }}</span>
+    </div>
+    {% if card.profile %}
+      <p class="hypothesis">{{ card.profile.description or card.profile.source }}</p>
+    {% elif card.description %}
+      <p class="hypothesis">{{ card.description }}</p>
+    {% endif %}
+
+    {% if card.metrics %}
+      <dl class="metrics">
+        {% for key, value in card.metrics.items() %}
+          <div class="metric"><dt>{{ key }}</dt><dd>{{ value }}</dd></div>
+        {% endfor %}
+      </dl>
+    {% endif %}
+
+    {% if card.profile %}
+      <div class="meta-row"><strong>Profile</strong><code>{{ card.profile.id }}</code></div>
+    {% endif %}
+    <div class="meta-row">
+      <strong>Changed slots</strong>
+      <div class="chips">
+        {% for slot in card.changed_slots %}
+          <span class="chip slot">{{ slot }}</span>
+        {% else %}
+          <span class="chip muted">no prompt slot change</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% if card.artifact_uri %}
+      <div class="meta-row"><strong>Artifact</strong><a href="{{ card.artifact_uri }}">{{ card.artifact_uri }}</a></div>
+    {% endif %}
+    <div class="variant-actions">
+      <button class="diff-button" type="button" data-diff-template="diff-{{ card.dom_id }}" {% if not card.diff %}disabled{% endif %}>
+        {% if card.diff %}Prompt Diff{% else %}No Diff{% endif %} ({{ card.diff|length }})
+      </button>
+      <a class="button-link" href="{{ mount_path }}{{ card.dashboard_href }}">dashboard</a>
+    </div>
+  </div>
+  <div id="diff-{{ card.dom_id }}" class="prompt-diff-template" hidden>
+    <h3 class="template-title" hidden>{{ card.variant_key or card.label }}</h3>
+    <p class="drawer-subtitle">{{ card.label }}{% if card.profile %} · profile <code>{{ card.profile.id }}</code>{% endif %}</p>
+    {% for slot, diff in card.diff.items() %}
+      <article class="diff-slot">
+        <div class="diff-slot-head">
+          <div>
+            <strong>{{ slot }}</strong>
+            <span>{{ diff.before_hash or "empty" }} → {{ diff.after_hash or "empty" }}</span>
+          </div>
+        </div>
+        <pre class="diff-code">{% for line in diff.unified.splitlines() %}<span class="{{ line|diff_line_class }}">{{ line }}</span>
+{% endfor %}</pre>
+      </article>
+    {% else %}
+      <p class="diff-empty">No prompt revision diff is available for this variant.</p>
+    {% endfor %}
+  </div>
+</article>

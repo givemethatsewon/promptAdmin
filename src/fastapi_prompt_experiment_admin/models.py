@@ -103,17 +103,18 @@ class PromptExperimentRun(Base):
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     run_group: Mapped[str] = mapped_column(String, index=True)
     variant_key: Mapped[str] = mapped_column(String, index=True)
+    label: Mapped[str | None] = mapped_column(String, nullable=True)
     prompt_profile_id: Mapped[str | None] = mapped_column(
         String, ForeignKey("prompt_admin_profiles.id"), nullable=True, index=True
     )
     status: Mapped[str] = mapped_column(String, default="recorded", index=True)
-    score: Mapped[float | None] = mapped_column(nullable=True)
-    total: Mapped[int] = mapped_column(Integer, default=0)
-    passed: Mapped[int] = mapped_column(Integer, default=0)
-    review: Mapped[int] = mapped_column(Integer, default=0)
-    error: Mapped[int] = mapped_column(Integer, default=0)
+    review_state: Mapped[str] = mapped_column(String, default="unreviewed", index=True)
+    sequence: Mapped[int] = mapped_column(Integer, default=0)
     artifact_uri: Mapped[str | None] = mapped_column(Text, nullable=True)
-    summary_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    artifact_kind: Mapped[str | None] = mapped_column(String, nullable=True)
+    metrics_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    annotations_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 

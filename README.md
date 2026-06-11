@@ -10,6 +10,8 @@ experimentation systems. It gives any project the pieces Place2Page needed:
 - named prompt profiles made from slot bindings
 - profile diffs
 - experiment run records
+- `variant_graph.html` lineage view
+- per-run generic dashboards
 - local runtime default promotion and rollback ledger
 - a lightweight HTML admin plus JSON API
 
@@ -22,13 +24,13 @@ Implemented:
 - immutable prompt revision storage
 - runtime default local promotion ledger
 - profile diff JSON API
+- profile diff HTML viewer
 - experiment run recording
-- basic dashboard
+- `variant_graph.html` as the default dashboard
+- per-run dashboards for generic artifacts, metrics, and annotations
 
 Not implemented yet:
 
-- `variant_graph.html` style lineage graph
-- dashboard-side diff viewer
 - Alembic migration package
 - auth integration
 - remote promotion adapters
@@ -92,13 +94,26 @@ decide whether to retry, rollback, or block.
 ## API Shape
 
 - `GET /prompt-admin/` - dashboard
+- `GET /prompt-admin/variant_graph.html` - lineage graph dashboard
+- `GET /prompt-admin/variant_graph` - lineage graph JSON
 - `GET /prompt-admin/profiles` - JSON profiles
 - `POST /prompt-admin/profiles` - create profile from slot content
 - `GET /prompt-admin/profiles/{id}` - profile detail and bound prompt texts
 - `GET /prompt-admin/profiles/{id}/diff?base_profile_id=...` - slot diff
+- `GET /prompt-admin/profiles/{id}/diff.html?base_profile_id=...` - slot diff UI
 - `POST /prompt-admin/promotions` - mark a profile as runtime default
 - `GET /prompt-admin/runs` - experiment run list
 - `POST /prompt-admin/runs` - record a run summary
+- `GET /prompt-admin/runs/{id}/dashboard` - run artifact and review dashboard
+
+Run records intentionally avoid fixed quality-gate fields. Store project-specific
+data in:
+
+- `artifact_kind`: for example `html`, `text`, `json`, `image`, `notebook`
+- `artifact_uri`: where a human can inspect the result
+- `metrics`: arbitrary numeric or textual measurements
+- `annotations`: human review notes, labels, decisions, or open questions
+- `metadata`: project-specific context
 
 ## Why Not Auto-Promote Remote?
 

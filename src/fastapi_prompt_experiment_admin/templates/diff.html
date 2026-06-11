@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title }} · Prompt Diff</title>
+    <style>
+      :root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #151922; background: #f5f7fa; }
+      body { margin: 0; }
+      main { max-width: 1080px; margin: 0 auto; padding: 30px 18px 56px; }
+      a { color: #175cd3; text-decoration: none; }
+      h1 { margin: 0 0 8px; font-size: 30px; }
+      h2 { margin: 24px 0 10px; font-size: 18px; }
+      p { margin: 0; color: #667085; }
+      code { background: #eef1f5; border-radius: 5px; padding: 2px 5px; }
+      pre { overflow: auto; background: #101828; color: #f2f4f7; padding: 14px; border-radius: 8px; line-height: 1.45; }
+      .card { background: #fff; border: 1px solid #d9dee7; border-radius: 8px; padding: 16px; margin-top: 14px; }
+      .topline { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+      .pill { display: inline-flex; border: 1px solid #ccd3df; border-radius: 999px; padding: 2px 8px; font-size: 12px; color: #344054; background: #fff; }
+      @media (max-width: 720px) { .topline { flex-direction: column; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="topline">
+        <div>
+          <h1>Prompt Diff</h1>
+          <p><strong>{{ profile.name }}</strong> against <strong>{{ base_profile.name if base_profile else "runtime default" }}</strong></p>
+        </div>
+        <a class="pill" href="{{ mount_path }}/variant_graph.html">Variant Graph</a>
+      </div>
+
+      {% for slot, item in diff.items() %}
+        <section class="card">
+          <h2>{{ slot }}</h2>
+          <p><code>{{ item.before_hash or "empty" }}</code> → <code>{{ item.after_hash or "empty" }}</code></p>
+          <pre>{{ item.unified }}</pre>
+        </section>
+      {% else %}
+        <section class="card">
+          <h2>No Diff</h2>
+          <p>This profile matches the selected baseline for all active slots.</p>
+        </section>
+      {% endfor %}
+    </main>
+  </body>
+</html>

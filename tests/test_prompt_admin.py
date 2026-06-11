@@ -39,7 +39,43 @@ def test_dashboard_loads():
     client = make_client()
     response = client.get("/prompt-admin/")
     assert response.status_code == 200
-    assert "Prompt Admin" in response.text
+    assert "Variant Graph" in response.text
+
+
+def test_variant_graph_json_links_profiles_runs_and_promotions():
+    client = make_client()
+    profile = create_profile(client, "baseline", "You are concise.", "Use plain CSS.")
+    client.post("/prompt-admin/promotions", json={"profile_id": profile["id"]})
+    run_response = client.post(
+        "/prompt-admin/runs",
+        json={
+            "run_group": "copy-r1",
+            "variant_key": "baseline",
+            "label": "Baseline copy",
+            "prompt_profile_id": profile["id"],
+            "artifact_kind": "text",
+            "artifact_uri": "file://outputs/copy-r1/baseline.txt",
+            "metrics": {"word_count": 120},
+            "annotations": {"decision": "needs_review"},
+        },
+    )
+    assert run_response.status_code == 201
+
+    graph_response = client.get("/prompt-admin/variant_graph")
+
+    assert graph_response.status_code == 200
+    graph = graph_response.json()
+    assert graph["runtime_default_id"] == profile["id"]
+    assert any(node["kind"] == "profile" for node in graph["nodes"])
+    assert any(node["kind"] == "run" for node in graph["nodes"])
+    assert any(edge["label"] == "evaluated by" for edge in graph["edges"])
+    assert graph["run_groups"][0]["name"] == "copy-r1"
+    assert graph["run_groups"][0]["cards"][0]["artifact_kind"] == "text"
+
+    html_response = client.get("/prompt-admin/variant_graph.html")
+    assert html_response.status_code == 200
+    assert "Runtime Variant Graph" in html_response.text
+    assert "Prompt Diff" in html_response.text
 
 
 def test_create_profile_and_promote_runtime_default():
@@ -75,6 +111,11 @@ def test_profile_diff_against_runtime_default():
     assert "+Use polished CSS." in diff["style.v1"]["unified"]
     assert "system.v1" not in diff
 
+    html_response = client.get(f"/prompt-admin/profiles/{candidate['id']}/diff.html")
+    assert html_response.status_code == 200
+    assert "Prompt Diff" in html_response.text
+    assert "Use polished CSS." in html_response.text
+
 
 def test_remote_promotion_requires_hook():
     client = make_client()
@@ -97,16 +138,30 @@ def test_record_run():
     response = client.post(
         "/prompt-admin/runs",
         json={
-            "run_group": "mobile-header-r1",
+            "run_group": "human-review-r1",
             "variant_key": "candidate",
+            "label": "Candidate output",
             "prompt_profile_id": profile["id"],
-            "score": 100,
-            "total": 1,
-            "passed": 1,
+            "review_state": "needs_review",
+            "artifact_kind": "text",
+            "artifact_uri": "file://outputs/human-review-r1/candidate.md",
+            "metrics": {"tokens": 430},
+            "annotations": {"reviewer": "pending"},
         },
     )
 
     assert response.status_code == 201
     runs = client.get("/prompt-admin/runs").json()["runs"]
-    assert runs[0]["run_group"] == "mobile-header-r1"
-    assert runs[0]["passed"] == 1
+    assert runs[0]["run_group"] == "human-review-r1"
+    assert runs[0]["review_state"] == "needs_review"
+    assert runs[0]["metrics"] == {"tokens": 430}
+
+    dashboard = client.get(f"/prompt-admin/runs/{runs[0]['id']}/dashboard")
+    assert dashboard.status_code == 200
+    assert "Run Dashboard" in dashboard.text
+    assert "Candidate output" in dashboard.text
+
+    group_dashboard = client.get("/prompt-admin/run-groups/human-review-r1/dashboard")
+    assert group_dashboard.status_code == 200
+    assert "Generic run dashboard" in group_dashboard.text
+    assert "tokens" in group_dashboard.text
