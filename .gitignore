@@ -1,0 +1,10 @@
+.venv/
+.ruff_cache/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+prompt_admin_example.db
+.DS_Store

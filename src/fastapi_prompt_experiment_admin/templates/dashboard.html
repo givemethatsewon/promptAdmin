@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ title }}</title>
+    <style>
+      :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      body { margin: 0; background: #f6f7f9; color: #141821; }
+      main { max-width: 1180px; margin: 0 auto; padding: 32px 20px 56px; }
+      h1 { margin: 0 0 6px; font-size: 32px; letter-spacing: 0; }
+      h2 { margin: 28px 0 12px; font-size: 18px; }
+      p { margin: 0; color: #667085; }
+      code { background: #eef1f5; padding: 2px 5px; border-radius: 5px; }
+      .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+      .card { background: #fff; border: 1px solid #d9dee7; border-radius: 8px; padding: 16px; box-shadow: 0 1px 2px rgba(15, 23, 42, .04); }
+      .metric { font-size: 30px; font-weight: 750; margin-top: 6px; }
+      table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #d9dee7; border-radius: 8px; overflow: hidden; }
+      th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid #eaedf2; font-size: 14px; vertical-align: top; }
+      th { background: #f0f3f7; color: #344054; font-weight: 700; }
+      tr:last-child td { border-bottom: 0; }
+      .pill { display: inline-flex; border: 1px solid #ccd3df; border-radius: 999px; padding: 2px 8px; font-size: 12px; color: #344054; background: #fff; }
+      .runtime { border-color: #0f766e; color: #0f766e; background: #ecfdf5; }
+      @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } main { padding-inline: 14px; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>{{ title }}</h1>
+      <p>Mounted at <code>{{ mount_path }}</code>. Active slots: {{ active_slots|length }}.</p>
+
+      <section class="grid">
+        <article class="card">
+          <p>Profiles</p>
+          <div class="metric">{{ profiles|length }}</div>
+        </article>
+        <article class="card">
+          <p>Runtime default</p>
+          <div class="metric">{{ "1" if runtime_default else "0" }}</div>
+        </article>
+        <article class="card">
+          <p>Recorded runs</p>
+          <div class="metric">{{ runs|length }}</div>
+        </article>
+      </section>
+
+      <h2>Prompt Profiles</h2>
+      <table>
+        <thead><tr><th>Name</th><th>Status</th><th>Source</th><th>Bindings</th><th>Updated</th></tr></thead>
+        <tbody>
+          {% for profile in profiles %}
+          <tr>
+            <td>
+              <strong>{{ profile.name }}</strong>
+              {% if runtime_default and runtime_default.id == profile.id %}<span class="pill runtime">runtime default</span>{% endif %}
+              <br /><code>{{ profile.id }}</code>
+            </td>
+            <td><span class="pill">{{ profile.status }}</span></td>
+            <td>{{ profile.source }}</td>
+            <td>{{ profile.bindings|length }}</td>
+            <td>{{ profile.updated_at }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5">No profiles yet. POST to <code>{{ mount_path }}/profiles</code>.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <h2>Recent Runs</h2>
+      <table>
+        <thead><tr><th>Run Group</th><th>Variant</th><th>Score</th><th>Result</th><th>Artifact</th></tr></thead>
+        <tbody>
+          {% for run in runs %}
+          <tr>
+            <td>{{ run.run_group }}</td>
+            <td>{{ run.variant_key }}</td>
+            <td>{{ run.score if run.score is not none else "-" }}</td>
+            <td>{{ run.passed }}/{{ run.total }} pass · {{ run.review }} review · {{ run.error }} error</td>
+            <td>{{ run.artifact_uri or "-" }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5">No runs recorded.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <h2>Promotion Ledger</h2>
+      <table>
+        <thead><tr><th>Profile</th><th>Previous</th><th>Status</th><th>Created</th></tr></thead>
+        <tbody>
+          {% for promotion in promotions %}
+          <tr>
+            <td><code>{{ promotion.source_profile_id }}</code></td>
+            <td><code>{{ promotion.previous_profile_id or "-" }}</code></td>
+            <td><span class="pill">{{ promotion.status }}</span></td>
+            <td>{{ promotion.created_at }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4">No promotions yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </main>
+  </body>
+</html>
